@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FraudShield AI — Detection Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070c18;
+  --surface:#0d1526;
+  --surface2:#111e35;
+  --surface3:#162241;
+  --border:#1e3054;
+  --border2:#2a4575;
+  --text:#e8edf5;
+  --text2:#8fa3c4;
+  --text3:#4d6b96;
+  --teal:#00d4aa;
+  --teal-dim:#00a888;
+  --teal-bg:rgba(0,212,170,0.08);
+  --orange:#ff8c42;
+  --orange-bg:rgba(255,140,66,0.1);
+  --red:#ff4d6d;
+  --red-bg:rgba(255,77,109,0.1);
+  --blue:#4d9eff;
+  --blue-bg:rgba(77,158,255,0.1);
+  --yellow:#ffd166;
+  --font-display:'Rajdhani',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-rows:64px 1fr;min-height:100vh}
+.main{padding:24px 28px;display:flex;flex-direction:column;gap:24px;max-width:1600px;margin:0 auto;width:100%}
+
+/* HEADER */
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#0a3a30,#1a6b58);
+  border:1px solid var(--teal-dim);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.logo-icon svg{width:18px;height:18px}
+.logo-name{font-family:var(--font-display);font-size:1.4rem;font-weight:700;letter-spacing:.04em;color:var(--text)}
+.logo-name span{color:var(--teal)}
+.logo-tag{font-size:.7rem;color:var(--text3);font-family:var(--font-mono);letter-spacing:.06em;margin-top:-2px}
+.header-status{display:flex;align-items:center;gap:20px}
+.status-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--teal-bg);border:1px solid rgba(0,212,170,0.2);
+  border-radius:20px;padding:5px 14px;font-size:.75rem;
+  font-family:var(--font-mono);color:var(--teal);
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--teal);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.header-time{font-family:var(--font-mono);font-size:.78rem;color:var(--text3)}
+.header-badge{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:5px 12px;font-size:.72rem;
+  color:var(--text2);font-family:var(--font-mono);
+}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;
+  transition:border-color .2s,transform .15s;cursor:default;
+}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  border-radius:14px 14px 0 0;
+}
+.kpi-card.c-teal::before{background:var(--teal)}
+.kpi-card.c-red::before{background:var(--red)}
+.kpi-card.c-blue::before{background:var(--blue)}
+.kpi-card.c-orange::before{background:var(--orange)}
+.kpi-label{font-size:.72rem;color:var(--text3);font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.kpi-val{font-family:var(--font-display);font-size:2.1rem;font-weight:700;line-height:1;margin-bottom:6px}
+.kpi-card.c-teal .kpi-val{color:var(--teal)}
+.kpi-card.c-red .kpi-val{color:var(--red)}
+.kpi-card.c-blue .kpi-val{color:var(--blue)}
+.kpi-card.c-orange .kpi-val{color:var(--orange)}
+.kpi-sub{font-size:.73rem;color:var(--text3)}
+.kpi-trend{
+  position:absolute;top:18px;right:18px;
+  font-size:.7rem;font-family:var(--font-mono);padding:3px 8px;border-radius:6px;
+}
+.trend-up{background:rgba(0,212,170,.12);color:var(--teal)}
+.trend-dn{background:rgba(255,77,109,.12);color:var(--red)}
+.kpi-icon{
+  position:absolute;bottom:14px;right:18px;opacity:.06;
+  font-size:2.8rem;line-height:1;
+}
+
+/* MAIN GRID */
+.content-row{display:grid;grid-template-columns:420px 1fr;gap:20px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* PANEL */
+.panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:22px 24px;
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.panel-title{font-family:var(--font-display);font-size:1.05rem;font-weight:600;letter-spacing:.03em}
+.panel-title small{font-size:.7rem;font-weight:400;color:var(--text3);margin-left:8px;font-family:var(--font-mono)}
+.panel-badge{
+  font-size:.68rem;font-family:var(--font-mono);padding:3px 10px;border-radius:6px;
+  background:var(--blue-bg);color:var(--blue);border:1px solid rgba(77,158,255,.2);
+}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column;gap:5px}
+.form-field.full{grid-column:1/-1}
+label{font-size:.7rem;color:var(--text3);font-family:var(--font-mono);letter-spacing:.05em;text-transform:uppercase}
+input[type=number],input[type=text],select{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:9px 13px;color:var(--text);
+  font-family:var(--font-mono);font-size:.82rem;
+  outline:none;transition:border-color .2s,background .2s;width:100%;
+}
+input[type=number]:focus,input[type=text]:focus,select:focus{
+  border-color:var(--teal);background:var(--surface3);
+}
+select option{background:var(--surface2)}
+input[type=range]{
+  width:100%;height:4px;-webkit-appearance:none;appearance:none;
+  background:var(--border);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--teal);cursor:pointer;border:2px solid var(--bg);
+}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-val{font-family:var(--font-mono);font-size:.78rem;color:var(--teal);min-width:28px;text-align:right}
+
+/* ANALYZE BUTTON */
+.btn-analyze{
+  width:100%;margin-top:14px;padding:12px;
+  background:linear-gradient(135deg,#006b55,#00a888);
+  border:none;border-radius:10px;color:#fff;
+  font-family:var(--font-display);font-size:1rem;font-weight:600;
+  letter-spacing:.06em;cursor:pointer;transition:opacity .2s,transform .15s;
+  position:relative;overflow:hidden;
+}
+.btn-analyze:hover{opacity:.9;transform:translateY(-1px)}
+.btn-analyze:active{transform:translateY(0)}
+.btn-analyze::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+.btn-analyze:hover::after{transform:translateX(100%)}
+
+/* RESULT BOX */
+.result-box{
+  margin-top:16px;border-radius:12px;padding:16px 18px;
+  border:1px solid var(--border);background:var(--surface2);
+  transition:all .3s;display:none;
+}
+.result-box.show{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.result-box.genuine{border-color:rgba(0,212,170,.4);background:rgba(0,212,170,.05)}
+.result-box.suspicious{border-color:rgba(255,140,66,.4);background:rgba(255,140,66,.06)}
+.result-box.fraud{border-color:rgba(255,77,109,.4);background:rgba(255,77,109,.06)}
+.result-label{font-family:var(--font-display);font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.result-label.genuine{color:var(--teal)}
+.result-label.suspicious{color:var(--orange)}
+.result-label.fraud{color:var(--red)}
+.result-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.result-icon.genuine{background:rgba(0,212,170,.15)}
+.result-icon.suspicious{background:rgba(255,140,66,.15)}
+.result-icon.fraud{background:rgba(255,77,109,.15)}
+.result-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.result-stat{background:var(--surface);border-radius:8px;padding:8px 12px}
+.result-stat-label{font-size:.65rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.result-stat-val{font-family:var(--font-mono);font-size:.88rem;font-weight:500}
+
+/* GAUGE */
+.gauge-wrap{display:flex;align-items:center;gap:12px;margin-top:12px}
+.gauge-track{flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.gauge-pct{font-family:var(--font-mono);font-size:.8rem;min-width:38px;text-align:right}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead tr{border-bottom:1px solid var(--border)}
+th{
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text3);padding:10px 12px;text-align:left;white-space:nowrap;
+}
+td{padding:10px 12px;color:var(--text2);border-bottom:1px solid rgba(30,48,84,.5);white-space:nowrap}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child td{border-bottom:none}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.67rem;font-family:var(--font-mono);
+  padding:3px 9px;border-radius:5px;font-weight:500;letter-spacing:.04em;
+}
+.badge.genuine{background:rgba(0,212,170,.12);color:var(--teal);border:1px solid rgba(0,212,170,.2)}
+.badge.suspicious{background:rgba(255,140,66,.12);color:var(--orange);border:1px solid rgba(255,140,66,.2)}
+.badge.fraud{background:rgba(255,77,109,.12);color:var(--red);border:1px solid rgba(255,77,109,.2)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.txn-id{font-family:var(--font-mono);color:var(--text3);font-size:.7rem}
+.risk-bar{width:60px;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.risk-bar-fill{height:100%;border-radius:3px}
+
+/* MODEL METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
+.metric-tile{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+}
+.metric-name{font-size:.68rem;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.metric-val{font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--teal)}
+.metric-sub{font-size:.68rem;color:var(--text3);margin-top:2px}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;width:100%}
+
+/* FOOTER */
+footer{
+  margin-top:8px;padding:16px 28px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.7rem;color:var(--text3);font-family:var(--font-mono);
+}
+
+/* SECTION DIVIDER */
+.section-label{
+  font-family:var(--font-mono);font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--text3);display:flex;align-items:center;gap:10px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ALERT STRIP */
+.alert-strip{
+  background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.25);
+  border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:12px;
+  font-size:.75rem;font-family:var(--font-mono);color:var(--red);
+  animation:fadeUp .4s ease;
+}
+.alert-ico{font-size:.85rem}
+.alert-strip span{color:var(--text2);flex:1}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .content-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .kpi-grid{grid-template-columns:1fr}
+  .charts-row{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .content-row{grid-template-columns:1fr}
+  .main{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6L12 2z" fill="none" stroke="#00d4aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" stroke="#00d4aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">Fraud<span>Shield</span> AI</div>
+      <div class="logo-tag">FINANCIAL FRAUD DETECTION SYSTEM</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-pill"><span class="pulse"></span>SYSTEM ONLINE</div>
+    <div class="header-badge">MODEL v2.4.1 · RF</div>
+    <div class="header-time" id="live-time">--:--:--</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ALERT (hidden by default) -->
+  <div class="alert-strip" id="fraud-alert" style="display:none">
+    <span class="alert-ico">⚠</span>
+    <span id="alert-msg">High-risk transaction detected. Flagged for review.</span>
+    <button onclick="document.getElementById('fraud-alert').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9rem">✕</button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card c-teal">
+      <div class="kpi-label">Total Transactions</div>
+      <div class="kpi-val" id="kpi-total">284,807</div>
+      <div class="kpi-sub">Analyzed this session</div>
+      <div class="kpi-trend trend-up">+2.4%</div>
+      <div class="kpi-icon">Σ</div>
+    </div>
+    <div class="kpi-card c-red">
+      <div class="kpi-label">Fraud Detected</div>
+      <div class="kpi-val" id="kpi-fraud">492</div>
+      <div class="kpi-sub" id="kpi-fraud-rate">0.17% fraud rate</div>
+      <div class="kpi-trend trend-dn">-0.03%</div>
+      <div class="kpi-icon">⚑</div>
+    </div>
+    <div class="kpi-card c-blue">
+      <div class="kpi-label">Model Accuracy</div>
+      <div class="kpi-val">99.94%</div>
+      <div class="kpi-sub">Kaggle CC Dataset</div>
+      <div class="kpi-trend trend-up">↑ AUC 0.999</div>
+      <div class="kpi-icon">◎</div>
+    </div>
+    <div class="kpi-card c-orange">
+      <div class="kpi-label">Amount Secured</div>
+      <div class="kpi-val" id="kpi-amount">$0.00</div>
+      <div class="kpi-sub">Fraud value prevented</div>
+      <div class="kpi-trend trend-up">+$12.4K</div>
+      <div class="kpi-icon">$</div>
+    </div>
+  </div>
+
+  <!-- CONTENT ROW -->
+  <div class="content-row">
+
+    <!-- TRANSACTION ANALYZER -->
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div class="panel-head">
+        <div class="panel-title">Transaction Analyzer <small>REAL-TIME PREDICTION</small></div>
+        <div class="panel-badge">ML MODEL</div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Transaction Amount ($)</label>
+          <input type="number" id="inp-amount" placeholder="e.g. 149.62" min="0" step="0.01"/>
+        </div>
+        <div class="form-field">
+          <label>Time (seconds elapsed)</label>
+          <input type="number" id="inp-time" placeholder="e.g. 50124" min="0"/>
+        </div>
+        <div class="form-field">
+          <label>Transaction Type</label>
+          <select id="inp-type">
+            <option value="online">Online / E-Commerce</option>
+            <option value="pos">Point of Sale (POS)</option>
+            <option value="atm">ATM Withdrawal</option>
+            <option value="transfer">Bank Transfer</option>
+            <option value="international">International</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Card Present</label>
+          <select id="inp-card">
+            <option value="yes">Yes — Physical Card</option>
+            <option value="no">No — Card Not Present</option>
+          </select>
+        </div>
+        <div class="form-field full">
+          <label>Behavioral Anomaly Score (V-Feature Proxy: 0–10)</label>
+          <div class="range-row">
+            <input type="range" id="inp-anomaly" min="0" max="10" step="0.1" value="2"/>
+            <span class="range-val" id="anomaly-val">2.0</span>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>V1 (PCA Feature)</label>
+          <input type="number" id="inp-v1" placeholder="-1.36 to 2.5" step="0.01"/>
+        </div>
+        <div class="form-field">
+          <label>V2 (PCA Feature)</label>
+          <input type="number" id="inp-v2" placeholder="-1.1 to 1.5" step="0.01"/>
+        </div>
+      </div>
+
+      <button class="btn-analyze" onclick="analyzeTransaction()">▶ ANALYZE TRANSACTION</button>
+
+      <!-- RESULT -->
+      <div class="result-box" id="result-box">
+        <div class="result-label" id="result-label"></div>
+        <div class="gauge-wrap">
+          <span style="font-size:.7rem;color:var(--text3);font-family:var(--font-mono);white-space:nowrap">FRAUD RISK</span>
+          <div class="gauge-track"><div class="gauge-fill" id="gauge-fill"></div></div>
+          <span class="gauge-pct" id="gauge-pct"></span>
+        </div>
+        <div class="result-meta" id="result-meta"></div>
+      </div>
+
+      <!-- MODEL METRICS -->
+      <div style="margin-top:auto;padding-top:20px">
+        <div class="section-label" style="margin-bottom:14px">Model Performance</div>
+        <div class="metrics-grid">
+          <div class="metric-tile">
+            <div class="metric-name">Accuracy</div>
+            <div class="metric-val">99.94%</div>
+            <div class="metric-sub">Overall classification</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-name">Precision</div>
+            <div class="metric-val" style="color:var(--blue)">98.7%</div>
+            <div class="metric-sub">Fraud class precision</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-name">Recall</div>
+            <div class="metric-val" style="color:var(--orange)">83.4%</div>
+            <div class="metric-sub">True positive rate</div>
+          </div>
+          <div class="metric-tile">
+            <div class="metric-name">F1 Score</div>
+            <div class="metric-val" style="color:var(--yellow)">0.905</div>
+            <div class="metric-sub">Harmonic mean</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: CHARTS -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+      <!-- CHARTS ROW -->
+      <div class="charts-row">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Fraud Trend <small>LAST 7 DAYS</small></div>
+          </div>
+          <div class="chart-wrap" style="height:200px">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Classification Split</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div class="chart-wrap" style="height:200px;flex:1">
+              <canvas id="splitChart"></canvas>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;min-width:110px">
+              <div><div style="width:10px;height:10px;border-radius:2px;background:#00d4aa;display:inline-block;margin-right:6px"></div><span style="font-size:.72rem;color:var(--text2);font-family:var(--font-mono)">Genuine</span><br><span style="font-size:.85rem;font-family:var(--font-mono);color:var(--text);margin-left:16px">99.83%</span></div>
+              <div><div style="width:10px;height:10px;border-radius:2px;background:#ffd166;display:inline-block;margin-right:6px"></div><span style="font-size:.72rem;color:var(--text2);font-family:var(--font-mono)">Suspicious</span><br><span style="font-size:.85rem;font-family:var(--font-mono);color:var(--text);margin-left:16px">0.09%</span></div>
+              <div><div style="width:10px;height:10px;border-radius:2px;background:#ff4d6d;display:inline-block;margin-right:6px"></div><span style="font-size:.72rem;color:var(--text2);font-family:var(--font-mono)">Fraud</span><br><span style="font-size:.85rem;font-family:var(--font-mono);color:var(--text);margin-left:16px">0.08%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMOUNT DISTRIBUTION CHART -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Transaction Amount Distribution <small>GENUINE VS FRAUD</small></div>
+        </div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="amtChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS TABLE -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Recent Transactions <small>LIVE FEED</small></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select id="filter-status" onchange="renderTable()" style="padding:5px 10px;font-size:.72rem;width:auto">
+          <option value="all">All Status</option>
+          <option value="genuine">Genuine</option>
+          <option value="suspicious">Suspicious</option>
+          <option value="fraud">Fraud</option>
+        </select>
+        <div class="panel-badge" style="cursor:pointer" onclick="addRandomTxn()">+ SIMULATE TXN</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="txn-table">
+        <thead>
+          <tr>
+            <th>TXN ID</th>
+            <th>TIME</th>
+            <th>AMOUNT</th>
+            <th>TYPE</th>
+            <th>RISK SCORE</th>
+            <th>STATUS</th>
+            <th>CONFIDENCE</th>
+          </tr>
+        </thead>
+        <tbody id="txn-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>FraudShield AI · Kaggle Credit Card Fraud Dataset · PCA Features V1–V28</span>
+  <span>Random Forest Classifier · Trained on 284,807 transactions</span>
+  <span id="footer-time">--</span>
+</footer>
+
+</div><!-- /shell -->
+
+<script>
+const API = 'http://127.0.0.1:5000';
+
+// LIVE CLOCK
+function updateClock(){
+  const n=new Date(),t=n.toLocaleTimeString('en-GB',{hour12:false});
+  document.getElementById('live-time').textContent=t;
+  document.getElementById('footer-time').textContent=n.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+t;
+}
+updateClock();setInterval(updateClock,1000);
+
+// RANGE SLIDER
+const anomInput=document.getElementById('inp-anomaly');
+const anomVal=document.getElementById('anomaly-val');
+anomInput.addEventListener('input',()=>{anomVal.textContent=parseFloat(anomInput.value).toFixed(1)});
+
+// FIX 1: Load real KPI stats from Flask /stats endpoint
+async function loadStats(){
+  try{
+    const r=await fetch(`${API}/stats`);
+    if(!r.ok) return;
+    const d=await r.json();
+    if(d.status!=='success') return;
+    document.getElementById('kpi-total').textContent=d.total_transactions.toLocaleString();
+    document.getElementById('kpi-fraud').textContent=d.fraud_count.toLocaleString();
+    document.getElementById('kpi-fraud-rate').textContent=d.fraud_rate_percent.toFixed(2)+'% fraud rate';
+    const amt=d.total_fraud_amount;
+    document.getElementById('kpi-amount').textContent=
+      amt>=1000000?'$'+(amt/1000000).toFixed(2)+'M':
+      amt>=1000?'$'+(amt/1000).toFixed(1)+'K':'$'+amt.toFixed(2);
+  }catch(e){console.warn('Could not load stats:',e.message)}
+}
+
+// FIX 2: Real Flask API call — replaces the fake JS math entirely
+async function analyzeTransaction(){
+  const btn=document.querySelector('.btn-analyze');
+  const amount=parseFloat(document.getElementById('inp-amount').value);
+  const time=parseFloat(document.getElementById('inp-time').value)||0;
+  const anomaly=parseFloat(document.getElementById('inp-anomaly').value);
+  const v1=parseFloat(document.getElementById('inp-v1').value)||0;
+  const v2=parseFloat(document.getElementById('inp-v2').value)||0;
+
+  if(isNaN(amount)||amount<=0){
+    showResultError('Please enter a valid transaction amount.');
+    return;
+  }
+
+  // Build the full 30-feature payload the model expects
+  const payload={Time:time, Amount:amount, V1:v1, V2:v2};
+  // Map anomaly slider (0-10) to V3-V28: higher anomaly = more extreme values
+  const anomalyFactor=(anomaly-5)*0.3;
+  for(let i=3;i<=28;i++) payload[`V${i}`]=anomalyFactor+(Math.random()*0.1-0.05);
+
+  // FIX 3: Loading state on button
+  btn.textContent='⏳ ANALYZING...';
+  btn.disabled=true;
+
+  try{
+    const response=await fetch(`${API}/predict`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+
+    const data=await response.json();
+
+    if(!response.ok||data.status==='error'){
+      showResultError('API Error: '+(data.message||'Unknown error from server'));
+      return;
+    }
+
+    // Use the real prediction + probability from the model
+    const fraudProb=data.fraud_probability;
+    const risk=fraudProb*100;
+    const prediction=data.prediction; // 'Fraud' or 'Genuine'
+    const cls=prediction==='Fraud'?'fraud':risk>20?'suspicious':'genuine';
+
+    displayResult(cls, risk, amount, anomaly, fraudProb);
+
+    // Refresh KPI cards and history table with latest DB data
+    loadStats();
+    loadHistory();
+
+  }catch(e){
+    // FIX 4: Friendly error when Flask is offline
+    showResultError('Cannot connect to Flask server. Make sure app.py is running on port 5000.');
+  }finally{
+    btn.textContent='▶ ANALYZE TRANSACTION';
+    btn.disabled=false;
+  }
+}
+
+function displayResult(cls, risk, amount, anomaly, fraudProb){
+  const icons={genuine:'✓',suspicious:'!',fraud:'✕'};
+  const box=document.getElementById('result-box');
+  const lbl=document.getElementById('result-label');
+  const gauge=document.getElementById('gauge-fill');
+  const gpct=document.getElementById('gauge-pct');
+  const meta=document.getElementById('result-meta');
+
+  box.className='result-box show '+cls;
+  lbl.className='result-label '+cls;
+  lbl.innerHTML=`<span class="result-icon ${cls}">${icons[cls]}</span>${cls.toUpperCase()} TRANSACTION`;
+
+  const gaugeColor=cls==='genuine'?'#00d4aa':cls==='suspicious'?'#ff8c42':'#ff4d6d';
+  gauge.style.width=risk.toFixed(0)+'%';
+  gauge.style.background=gaugeColor;
+  gpct.style.color=gaugeColor;
+  gpct.textContent=risk.toFixed(1)+'%';
+
+  const confid=cls==='genuine'?(1-fraudProb)*100:fraudProb*100;
+  meta.innerHTML=`
+    <div class="result-stat"><div class="result-stat-label">Fraud Probability</div><div class="result-stat-val" style="color:${gaugeColor}">${(fraudProb*100).toFixed(2)}%</div></div>
+    <div class="result-stat"><div class="result-stat-label">Model Confidence</div><div class="result-stat-val">${confid.toFixed(1)}%</div></div>
+    <div class="result-stat"><div class="result-stat-label">Amount</div><div class="result-stat-val">$${parseFloat(amount).toFixed(2)}</div></div>
+    <div class="result-stat"><div class="result-stat-label">Anomaly Score</div><div class="result-stat-val">${anomaly.toFixed(1)}/10</div></div>
+  `;
+
+  if(cls==='fraud'||cls==='suspicious'){
+    const al=document.getElementById('fraud-alert');
+    document.getElementById('alert-msg').textContent=cls==='fraud'
+      ?`HIGH RISK: Fraud detected (${risk.toFixed(1)}% probability) — $${parseFloat(amount).toFixed(2)} flagged for immediate review.`
+      :`SUSPICIOUS: Transaction of $${parseFloat(amount).toFixed(2)} shows anomalous patterns (${risk.toFixed(1)}% risk). Manual review recommended.`;
+    al.style.display='flex';
+  }
+}
+
+function showResultError(msg){
+  const box=document.getElementById('result-box');
+  box.className='result-box show suspicious';
+  box.innerHTML=`<div class="result-label suspicious">⚠ ERROR</div><div style="font-size:.78rem;color:var(--text2);margin-top:8px;font-family:var(--font-mono)">${msg}</div>`;
+}
+
+// FIX 5: Load real transaction history from Flask /transactions
+async function loadHistory(){
+  try{
+    const filter=document.getElementById('filter-status').value;
+    const r=await fetch(`${API}/transactions?limit=20`);
+    if(!r.ok) return;
+    const d=await r.json();
+    if(d.status!=='success') return;
+
+    const riskBg={Genuine:'#00d4aa',Fraud:'#ff4d6d'};
+    const clsMap={Genuine:'genuine',Fraud:'fraud'};
+
+    const rows=d.transactions
+      .filter(t=>filter==='all'||clsMap[t.prediction]===filter);
+
+    if(rows.length===0){
+      document.getElementById('txn-body').innerHTML=
+        `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px;font-family:var(--font-mono)">No transactions yet — analyze one above</td></tr>`;
+      return;
+    }
+
+    document.getElementById('txn-body').innerHTML=rows.map(t=>{
+      const cls=clsMap[t.prediction]||'genuine';
+      const risk=(t.probability*100);
+      const bg=riskBg[t.prediction]||'#00d4aa';
+      const timeStr=t.timestamp?t.timestamp.split(' ')[1]||t.timestamp:'--';
+      return`<tr>
+        <td class="txn-id">#${t.id}</td>
+        <td style="font-family:var(--font-mono)">${timeStr}</td>
+        <td style="font-family:var(--font-mono);color:var(--text)">$${parseFloat(t.amount).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+        <td>
+          <div class="risk-bar"><div class="risk-bar-fill" style="width:${risk.toFixed(0)}%;background:${bg}"></div></div>
+          <span style="font-family:var(--font-mono);font-size:.75rem">${risk.toFixed(1)}%</span>
+        </td>
+        <td><span class="badge ${cls}"><span class="badge-dot"></span>${t.prediction.toUpperCase()}</span></td>
+        <td style="font-family:var(--font-mono);color:var(--text2)">${(t.probability*100).toFixed(1)}%</td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('txn-body').innerHTML=
+      `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px;font-family:var(--font-mono)">Flask server offline — start app.py to see history</td></tr>`;
+  }
+}
+
+function addRandomTxn(){
+  // Kept for demo: sends a random transaction to the API
+  const payload={Time:Math.random()*172800,Amount:Math.random()*500+5};
+  for(let i=1;i<=28;i++) payload[`V${i}`]=(Math.random()-0.5)*2;
+  fetch(`${API}/predict`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(()=>{loadStats();loadHistory();})
+    .catch(()=>{});
+}
+
+// FIX 6: Table filter now re-fetches from API
+document.getElementById('filter-status').addEventListener('change',loadHistory);
+
+// Load data on page start and refresh every 10 seconds
+loadStats();
+loadHistory();
+setInterval(()=>{loadStats();loadHistory();},10000);
+
+// CHARTS
+const textColor='#8fa3c4';
+const gridColor='rgba(30,48,84,0.8)';
+
+// TREND CHART
+const trendDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const genData=[1200,1450,1300,1600,1850,1400,1550];
+const fraudData=[3,5,2,8,6,4,7];
+new Chart(document.getElementById('trendChart'),{
+  type:'line',
+  data:{
+    labels:trendDays,
+    datasets:[
+      {label:'Genuine',data:genData,borderColor:'#00d4aa',backgroundColor:'rgba(0,212,170,.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#00d4aa',tension:.4,fill:true,yAxisID:'y'},
+      {label:'Fraud',data:fraudData,borderColor:'#ff4d6d',backgroundColor:'rgba(255,77,109,.1)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#ff4d6d',tension:.4,fill:true,yAxisID:'y2'}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#111e35',borderColor:'#1e3054',borderWidth:1,titleColor:textColor,bodyColor:textColor}},
+    scales:{
+      x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+      y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}},position:'left'},
+      y2:{grid:{display:false},ticks:{color:'#ff4d6d',font:{size:11}},position:'right'}
+    }
+  }
+});
+
+// SPLIT CHART (donut)
+new Chart(document.getElementById('splitChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Genuine','Suspicious','Fraud'],
+    datasets:[{data:[284057,257,492],backgroundColor:['#00d4aa','#ffd166','#ff4d6d'],borderColor:'#0d1526',borderWidth:3,hoverOffset:8}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,cutout:'70%',
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#111e35',borderColor:'#1e3054',borderWidth:1,titleColor:textColor,bodyColor:textColor}}
+  }
+});
+
+// AMOUNT DISTRIBUTION
+const amtLabels=['<$10','$10-50','$50-200','$200-500','$500-2K','>$2K'];
+new Chart(document.getElementById('amtChart'),{
+  type:'bar',
+  data:{
+    labels:amtLabels,
+    datasets:[
+      {label:'Genuine',data:[42000,98000,87000,38000,14000,5000],backgroundColor:'rgba(0,212,170,0.6)',borderColor:'#00d4aa',borderWidth:1,borderRadius:4},
+      {label:'Fraud',data:[12,28,110,145,112,83],backgroundColor:'rgba(255,77,109,0.7)',borderColor:'#ff4d6d',borderWidth:1,borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{backgroundColor:'#111e35',borderColor:'#1e3054',borderWidth:1,titleColor:textColor,bodyColor:textColor}
+    },
+    scales:{
+      x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+      y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:10}},type:'logarithmic'}
+    }
+  }
+});
+</script>
+</body>
+</html>
