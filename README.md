@@ -1,72 +1,137 @@
-# 🛡️ Credit Card Fraud Detection System
+# AI-Based Financial Fraud Detection System 🚨
 
-A complete, end-to-end machine learning application designed to identify potentially fraudulent credit card transactions. This project includes data processing, model training, a REST API built with Flask, and a web-based user interface.
+## 📌 Project Overview
 
-## 📁 Project Structure
+This project is an AI-powered system designed to detect fraudulent financial transactions using Machine Learning. It analyzes transaction patterns such as amount, time, and behavior to classify transactions as **Genuine**, **Suspicious**, or **Fraudulent**.
 
-Here is a breakdown of the files included in this repository and what they do:
+---
 
-* **`app.py`**: The main Flask web server that hosts the prediction API and serves the frontend.
-* **`train_model.py`**: The machine learning script used to preprocess the data and train the fraud detection model.
-* **`fraud_model.pkl`**: The serialized, pre-trained machine learning model used by the API to make predictions.
-* **`index.html`**: The web-based dashboard for users to input transaction details and receive fraud probability scores.
-* **`transactions.db`**: A local SQLite database used to log and store transaction history.
-* **`test_api.py`**: A suite of automated tests to ensure the API endpoints are functioning correctly.
-* **`Requirements.txt`**: A list of all Python dependencies needed to run this project.
-* **`creditcard.csv`**: The dataset used to train the model. *(Note: Often kept local and excluded from version control due to file size limits).*
-* **`.gitignore`**: Specifies intentionally untracked files (like `venv` and local databases) that Git should ignore.
+## ⚙️ Features
 
-## 🚀 Getting Started
+* Real-time fraud detection using Machine Learning
+* REST API built with Flask
+* Interactive dashboard for visualization
+* Batch transaction analysis (CSV, Excel, PDF)
+* Fraud probability scoring
+* SQLite database for transaction storage
+* API test suite for validation
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+---
 
-### 1. Prerequisites
-Make sure you have Python 3.x installed on your computer. 
+## 🧠 Machine Learning Model
 
-### 2. Clone the Repository
+* Algorithm: Random Forest Classifier
+* Dataset: Kaggle Credit Card Fraud Dataset
+* Handles imbalanced data using SMOTE
+* Outputs:
+
+  * Fraud probability
+  * Classification (Genuine / Suspicious / Fraud)
+
+---
+
+## 🏗️ Project Structure
+
+```
+├── app.py               # Flask backend API
+├── train_model.py       # Model training script
+├── test_api.py          # API testing
+├── index.html           # Frontend dashboard
+├── fraud_model.pkl      # Trained model
+├── model_config.json    # Model configuration
+├── transactions.db      # Database
+```
+
+---
+
+## 🚀 How to Run the Project
+
+### 1. Install dependencies
+
 ```bash
-git clone [https://github.com/yourusername/your-repo-name.git](https://github.com/yourusername/your-repo-name.git)
-cd your-repo-name
-### 3. Set Up a Virtual Environment
-It is highly recommended to run this project inside a virtual environment to manage dependencies cleanly.
+pip install -r requirements.txt
+```
 
-```Bash
-# Create the virtual environment
-python -m venv venv
+### 2. Train the model
 
-# Activate on Windows:
-venv\Scripts\activate
-
-# Activate on macOS/Linux:
-source venv/bin/activate
-###4. Install Dependencies
-With your virtual environment activated, install the required libraries:
-
-```Bash
-pip install -r Requirements.txt
-🛠️ Usage
-Running the Web Application
-To start the Flask server and interact with the web interface, run:
-
-```Bash
-python app.py
-Once the server starts, open your web browser and navigate to http://127.0.0.1:5000.
-
-Retraining the Model (Optional)
-If you wish to retrain the machine learning model using the creditcard.csv dataset, you can run the training script:
-
-```Bash
+```bash
 python train_model.py
-This will generate a new fraud_model.pkl file.
+```
 
-🧪 Testing
-This project includes automated tests to verify the API's integrity. To run the test suite, use the following command:
+### 3. Run backend server
 
-```Bash
+```bash
+python app.py
+```
+
+### 4. Open frontend
+
+Open `index.html` in your browser
+
+---
+
+## 🔌 API Endpoints
+
+### Predict Transaction
+
+```
+POST /predict
+```
+
+### Get Transactions
+
+```
+GET /transactions
+```
+
+### Get Statistics
+
+```
+GET /stats
+```
+
+### Model Info
+
+```
+GET /model-info
+```
+
+---
+
+## 🧪 Run API Tests 
+
+***Before running the API Test, your backend server should be running (i.e python app.py ). then in new terminal you will test_api then run ***
+
+```bash
 python test_api.py
-📝 License
-This project is open-source and available under the MIT License.
+```
 
+---
 
-### A Quick Note on the Dataset
-I included a note in the README about `creditcard.csv`. Because datasets are usually very large, it is standard practice to keep them out of GitHub to save space and respect file size limits (which we did by adding `*.csv` to your `.gitignore` earlier). The README explains to users what the file is, even if they don't see it directly in the repository!
+## 📊 Technologies Used
+
+* Python
+* Flask
+* Scikit-learn
+* Pandas & NumPy
+* SQLite
+* HTML, CSS, JavaScript
+* Chart.js
+
+---
+
+## 🎯 Objective
+
+To build an intelligent system that detects fraudulent transactions in real-time and improves financial security.
+
+---
+
+## 📚 Dataset
+
+Kaggle Credit Card Fraud Detection Dataset
+
+---
+
+## 👨‍💻 Author
+
+Final Year CSE Project
