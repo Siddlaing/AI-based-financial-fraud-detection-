@@ -100,7 +100,7 @@ GET /model-info
 
 ## 🧪 Run API Tests 
 
-***Before running the API Test, your backend server should be running (i.e python app.py ). then in new terminal you will test_api then run ***
+***Before running the API Test, your backend server should be running (i.e app.py ). Then in the new terminal you will run the API Tests ***
 
 ```bash
 python test_api.py
