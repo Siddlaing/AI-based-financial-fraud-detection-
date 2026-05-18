@@ -1,6 +1,6 @@
-# AI-Based Financial Fraud Detection System 🚨
+# AI-Based Financial Fraud Detection System 
 
-## 📌 Project Overview
+##  Project Overview
 
 This project is an AI-powered system designed to detect fraudulent financial transactions using Machine Learning. It analyzes transaction patterns such as amount, time, and behavior to classify transactions as **Genuine**, **Suspicious**, or **Fraudulent**.
 
@@ -132,6 +132,6 @@ Kaggle Credit Card Fraud Detection Dataset
 
 ---
 
-## 👨‍💻 Author
+
 
 Final Year CSE Project
