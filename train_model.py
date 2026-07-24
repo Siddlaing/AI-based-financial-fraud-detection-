@@ -63,6 +63,7 @@ except ImportError:
 print("=" * 60)
 print("1. Loading dataset...")
 data = pd.read_csv(CSV_PATH)
+data = data.dropna()
 print(f"   Rows   : {data.shape[0]:,}")
 print(f"   Columns: {data.shape[1]}")
 fraud_count = int(data["Class"].sum())
@@ -119,7 +120,7 @@ model = RandomForestClassifier(
     min_samples_leaf=2,      # smooths out synthetic SMOTE samples
     random_state=42,
     n_jobs=-1,               # use all CPU cores
-    class_weight="balanced", # extra protection against class imbalance
+    # class_weight="balanced",  extra protection against class imbalance
 )
 model.fit(X_train_sm, y_train_sm)
 print("   Training complete.")
