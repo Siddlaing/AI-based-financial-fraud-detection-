@@ -182,7 +182,7 @@ def predict_fraud():
             return jsonify({"status": "error", "message": err}), 400
 
         # Build feature DataFrame in the exact column order the model expects
-        df         = pd.DataFrame([data])[FEATURE_NAMES]
+        df = pd.DataFrame([data])[FEATURE_NAMES].astype(float)
         fraud_prob = float(model.predict_proba(df)[0][1])
         prediction, cls = classify(fraud_prob)
 
