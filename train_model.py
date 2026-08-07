@@ -120,7 +120,7 @@ model = RandomForestClassifier(
     min_samples_leaf=2,      # smooths out synthetic SMOTE samples
     random_state=42,
     n_jobs=-1,               # use all CPU cores
-    # class_weight="balanced",  extra protection against class imbalance
+    class_weight="balanced",  extra protection against class imbalance
 )
 model.fit(X_train_sm, y_train_sm)
 print("   Training complete.")
